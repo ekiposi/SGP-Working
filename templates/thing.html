@@ -183,7 +183,7 @@
             console.log(data)
             if (data.status === 'success') {
                 if (data.faceEnabled) {
-                    showMessage("QR Code Scan Successful", 'success')
+                    showMessage("Code QR Scanné.", 'success')
                     html5QrcodeScanner.clear(); // Stop the QR scanner completely
                     startFacialRecognition(data.empId);
                 } else {
@@ -191,7 +191,7 @@
                     setTimeout(() => window.location.reload(), 2000);
                 }
             } else {
-                showMessage("QR Code Scan Failed", 400);
+                showMessage("Erreur lors du scan du code QR.", 400);
                 setTimeout(() => switchToQRScanning(), 2000);
             }
         }
