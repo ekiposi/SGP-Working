@@ -16,13 +16,6 @@ import sqlite3
 import schedule
 import time
 import shutil
-import pytz
-
-# Configure timezone
-eastern = pytz.timezone('America/New_York')
-
-def get_current_time():
-    return datetime.now(eastern)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
@@ -45,6 +38,10 @@ with app.app_context():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+def get_eastern_time():
+    # Always return UTC-5 regardless of server location
+    return datetime.utcnow() - timedelta(hours=5)
 
 # Routes
 @app.route('/')
@@ -300,9 +297,9 @@ def delete_employee(employee_id):
     return redirect(url_for('employees'))
 
 def handle_attendance(employee):
-    now = get_current_time()
-    today_start = now.astimezone(eastern).replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = now.astimezone(eastern).replace(hour=23, minute=59, second=59, microsecond=999999)
+    now = get_eastern_time()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
     
     # Check for existing attendance today
     attendance = Attendance.query.filter(
@@ -430,7 +427,7 @@ def facial_recognition():
 @app.route('/today_attendance')
 @login_required
 def today_attendance():
-    today = get_current_time()
+    today = get_eastern_time()
     today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
     
@@ -543,7 +540,7 @@ def report_data():
 @app.route('/profile')
 @login_required
 def profile():
-    today = get_current_time()
+    today = get_eastern_time()
     today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
     
@@ -570,7 +567,7 @@ def filter_attendance():
     filter_type = request.args.get('filter')
     employee_id = 1
 
-    today = get_current_time()
+    today = get_eastern_time()
     start_date = None
 
     if filter_type == 'week':
@@ -609,12 +606,12 @@ def dashboard():
     total_employees = Employee.query.count()
 
     present_employees = Attendance.query.filter(
-        Attendance.check_in >= get_current_time().replace(hour=0, minute=0, second=0)
+        Attendance.check_in >= get_eastern_time().replace(hour=0, minute=0, second=0)
     ).count()
 
     if config_data['lateComers']:
         latecomers = Attendance.query.filter(
-            Attendance.check_in >= get_current_time().replace(hour=0, minute=0, second=0),
+            Attendance.check_in >= get_eastern_time().replace(hour=0, minute=0, second=0),
             func.time(Attendance.check_in) > in_time
         ).count()
     else:
@@ -628,7 +625,7 @@ def dashboard():
                     func.time(Attendance.check_in).between(in_time, out_time),
                     func.time(Attendance.check_out).between(in_time, out_time)
                 ),
-                Attendance.check_in >= get_current_time().replace(hour=0, minute=0, second=0)
+                Attendance.check_in >= get_eastern_time().replace(hour=0, minute=0, second=0)
             )
         )
     ).count()
@@ -640,7 +637,7 @@ def dashboard():
     activity_labels = []
     activity_data = []
     for i in range(7):
-        day = get_current_time().date() - timedelta(days=i)
+        day = get_eastern_time().date() - timedelta(days=i)
         activity_labels.append(day.strftime('%A'))
         activity_data.append(
             Attendance.query.filter(
@@ -649,7 +646,7 @@ def dashboard():
             ).count()
         )
     
-    today_start = get_current_time().replace(hour=0, minute=0, second=0)
+    today_start = get_eastern_time().replace(hour=0, minute=0, second=0)
     today_attendance = Attendance.query.filter(Attendance.check_in >= today_start).all()
 
     return render_template(
@@ -665,9 +662,6 @@ def dashboard():
         today_attendance=today_attendance
     )
 
-from datetime import datetime, timedelta
-from flask import jsonify
-
 @app.route('/activity-data', methods=['GET'])
 def activity_data():
     # Get the period parameter (day, week, month, year)
@@ -678,7 +672,7 @@ def activity_data():
     
     if period == 'day':
         # Group data by hour for the current day
-        current_date = get_current_time().date()
+        current_date = get_eastern_time().date()
         for hour in range(24):
             start_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=hour)
             end_time = start_time + timedelta(hours=1)
@@ -692,7 +686,7 @@ def activity_data():
     elif period == 'week':
         # Group data by last 7 days
         for i in range(7):
-            day = get_current_time().date() - timedelta(days=i)
+            day = get_eastern_time().date() - timedelta(days=i)
             activity_labels.insert(0, day.strftime('%A'))  # Add to the start for correct order
             activity_data.insert(0, 
                 Attendance.query.filter(
@@ -702,7 +696,7 @@ def activity_data():
             )
     elif period == 'month':
         # Group data by days in the current month
-        current_date = get_current_time()
+        current_date = get_eastern_time()
         start_of_month = datetime(current_date.year, current_date.month, 1)
         num_days = (datetime(current_date.year, current_date.month + 1, 1) - start_of_month).days
         for day in range(num_days):
@@ -717,7 +711,7 @@ def activity_data():
             )
     elif period == 'year':
         # Group data by months in the current year
-        current_year = get_current_time().year
+        current_year = get_eastern_time().year
         for month in range(1, 13):
             start_time = datetime(current_year, month, 1)
             if month == 12:
@@ -736,22 +730,6 @@ def activity_data():
         "labels": activity_labels,
         "data": activity_data
     })
-# @app.route('/change_password', methods=['POST'])
-# @login_required
-# def change_password():
-#     current_password = request.form.get('current_password')
-#     new_password = request.form.get('new_password')
-#     confirm_password = request.form.get('confirm_password')
-#     if not current_user.check_password(current_password):
-#         flash('Mot de passe actuel incorrect.', 'error')
-#         return redirect(url_for('profile'))
-#     if new_password != confirm_password:
-#         flash('Les mots de passe ne correspondent pas.', 'error')
-#         return redirect(url_for('profile'))
-#     current_user.password = generate_password_hash(new_password)
-#     db.session.commit()
-#     flash('Mot de passe mis à jour avec succès.', 'success')
-#     return redirect(url_for('profile'))
 
 @app.route('/backup')
 @login_required
@@ -857,7 +835,7 @@ def delete_backup(backup_id):
 
 def create_backup_file():
     # Create a timestamp for the backup filename
-    timestamp = get_current_time().strftime('%Y%m%d_%H%M%S')
+    timestamp = get_eastern_time().strftime('%Y%m%d_%H%M%S')
     backup_filename = f'database_backup_{timestamp}.db'
     backup_path = os.path.join(BACKUP_DIR, backup_filename)
     
@@ -894,7 +872,7 @@ def cleanup_old_backups():
                     file_path = os.path.join(BACKUP_DIR, filename)
                     timestamp_str = filename.replace('database_backup_', '').replace('.db', '')
                     file_date = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
-                    if (get_current_time() - file_date).days > retention_period:
+                    if (get_eastern_time() - file_date).days > retention_period:
                         os.remove(file_path)
     except Exception as e:
         print(f'Erreur lors de la suppression des anciennes sauvegardes: {str(e)}')
