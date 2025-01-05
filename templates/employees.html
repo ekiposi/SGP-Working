@@ -1,0 +1,677 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card card-left">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Ajouter un nouvel employé</h5>
+        </div>
+        <div class="card-body p-6 bg-white rounded-lg shadow-sm">
+          <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Personal Information Section -->
+              <div class="space-y-6">
+                <h3
+                  class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2"
+                >
+                  Informations Personnelles
+                </h3>
+
+                <div class="form-group">
+                  <label
+                    for="full_name"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Nom complet</label
+                  >
+                  <input
+                    type="text"
+                    class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="full_name"
+                    name="full_name"
+                    required
+                  />
+                  <p class="mt-1 text-sm text-gray-500">
+                    Entrez le nom et le prénom
+                  </p>
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="email"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Email</label
+                  >
+                  <input
+                    type="email"
+                    class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="email"
+                    name="email"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="phone"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Numéro de téléphone</label
+                  >
+                  <input
+                    type="tel"
+                    class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="phone"
+                    name="phone"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="gender"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Sexe</label
+                  >
+                  <select
+                    class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="gender"
+                    name="gender"
+                    required
+                  >
+                    <option value="">Sélectionner le sexe</option>
+                    <option value="male">Homme</option>
+                    <option value="female">Femme</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="dob"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Date de naissance</label
+                  >
+                  <input
+                    type="date"
+                    class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="dob"
+                    name="dob"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Professional Information Section -->
+              <div class="space-y-6">
+                <h3
+                  class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2"
+                >
+                  Informations Professionnelles
+                </h3>
+
+                <div class="form-group">
+                  <label
+                    for="department"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Département</label
+                  >
+                  <select
+                    class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="department"
+                    name="department"
+                    required
+                  >
+                    <option value="">Sélectionner le département</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="role"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Rôle</label
+                  >
+                  <select
+                    class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="role"
+                    name="role"
+                    required
+                    disabled
+                  >
+                    <option value="">Sélectionner le rôle</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="hire_date"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Date d'embauche</label
+                  >
+                  <input
+                    type="date"
+                    class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    id="hire_date"
+                    name="hire_date"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label
+                    for="profile_picture"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Photo de profil</label
+                  >
+                  <div class="mt-1 flex items-center">
+                    <span
+                      class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100"
+                    >
+                      <svg
+                        class="h-full w-full text-gray-300"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                      </svg>
+                    </span>
+                    <input
+                      type="file"
+                      class="ml-5 form-input block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      id="profile_picture"
+                      name="profile_picture"
+                      accept=".jpg, .jpeg, .png"
+                      required
+                    />
+                  </div>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Formats autorisés: jpg, jpeg, png
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end mt-6 pt-6 border-t border-gray-200">
+              <button
+                type="submit"
+                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+              >
+                <i class="fas fa-plus-circle mr-2"></i>Ajouter un nouvel employé
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card card-right">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="card-title mb-0">Liste des employés</h5>
+          <button id="downloadPdf" class="btn btn-primary btn-sm">
+            <i class="fas fa-download"></i> Télecharger en PDF
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="display table table-striped" id="employeeTable">
+              <thead>
+                <tr>
+                  <th>Photo de profil</th>
+                  <th>ID</th>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Numéro de téléphone</th>
+                  <th>Départment</th>
+                  <th>Sexe</th>
+                  <th>Date de naissance</th>
+                  <th>Rôle</th>
+                  <th>Date d'embauche</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for employee in employees %}
+                <tr>
+                  <td>
+                    <img
+                      class="img-fluid"
+                      src="{{ url_for('static', filename=employee.photo) }}"
+                      alt="{{ employee.full_name }}"
+                      style="width: 50px; height: 50px; object-fit: cover; border-radius: 100%;"
+                    />
+                  </td>
+                  <td>{{ employee.pluri_id }}</td>
+                  <td>{{ employee.full_name }}</td>
+                  <td>{{ employee.email }}</td>
+                  <td>{{ employee.phone }}</td>
+                  <td>{{ employee.department }}</td>
+                  <td>{{ employee.gender | capitalize }}</td>
+                  <td>{{ employee.dob.strftime('%Y-%m-%d') }}</td>
+                  <td>{{ employee.position }}</td>
+                  <td>{{ employee.hire_date.strftime('%Y-%m-%d') }}</td>
+                  <td>
+                    <a
+                      href="{{ url_for('static', filename=employee.generate_qr_code()) }}"
+                      class="btn btn-sm btn-primary"
+                      download="qr_{{ employee.pluri_id }}.png"
+                    >
+                      <i class="fas fa-download"></i> QR Code
+                    </a>
+                    <a
+                      href="{{ url_for('update_employee', employee_id=employee.id) }}"
+                      class="btn btn-sm btn-secondary"
+                      >Modifier</a
+                    >
+                    <a
+                      href="{{ url_for('delete_employee', employee_id=employee.id) }}"
+                      class="btn btn-sm btn-danger delete-employee"
+                      data-url="{{ url_for('delete_employee', employee_id=employee.id) }}"
+                    >
+                      Supprimer
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-input,
+  .form-select {
+    @apply transition-colors duration-200;
+  }
+
+  .form-group {
+    @apply relative;
+  }
+
+  .form-group:focus-within label {
+    @apply text-blue-600;
+  }
+
+  /* Table Styling */
+  .dataTables_wrapper {
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .dataTables_filter {
+    margin-bottom: 20px;
+  }
+
+  .dataTables_filter input {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin-left: 8px;
+  }
+
+  .dataTables_length select {
+    padding: 6px 24px 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin: 0 8px;
+  }
+
+  table.dataTable {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  table.dataTable thead th {
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 2px solid #e2e8f0;
+    text-align: left;
+  }
+
+  table.dataTable tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+  }
+
+  table.dataTable tbody tr:hover {
+    background-color: #f1f5f9;
+  }
+
+  .dataTables_paginate {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .dataTables_paginate .paginate_button {
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #475569;
+  }
+
+  .dataTables_paginate .paginate_button:hover {
+    background-color: #f1f5f9;
+  }
+
+  .dataTables_paginate .paginate_button.current {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+
+  .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Custom scrollbar for better appearance */
+  .dataTables_wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .dataTables_wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  .dataTables_wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  .dataTables_wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+</style>
+
+<style>
+  /* Initial states for GSAP animations */
+  .card-left, .card-right {
+      opacity: 0;
+      visibility: hidden;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      // Set initial states
+      gsap.set([".card-left", ".card-right"], {
+          visibility: "visible"
+      });
+
+      // Create timeline for better control
+      const tl = gsap.timeline({
+          defaults: {
+              duration: 0.8,
+              ease: "power2.out"
+          }
+      });
+
+      // Add animations to timeline
+      tl.fromTo(".card-left", 
+          { 
+              opacity: 0,
+              x: -50,
+          },
+          {
+              opacity: 1,
+              x: 0,
+              duration: 1,
+              ease: "back.out(1.7)"
+          }
+      ).fromTo(".card-right",
+          {
+              opacity: 0,
+              x: 50,
+          },
+          {
+              opacity: 1,
+              x: 0,
+              duration: 1,
+              ease: "back.out(1.7)"
+          },
+          "-=0.5" // Start slightly before the first animation ends
+      );
+  });
+</script>
+
+<script>
+  // Define the departments and their associated roles
+  const departmentRoles = {
+    "Administration et Direction": [
+      "Comptable",
+      "Directeur(trice) médical(e)",
+      "Directeur(trice) de l'hôpital",
+      "Gestionnaire des approvisionnements",
+      "Gestionnaire de la qualité",
+      "Gestionnaire des opérations",
+      "Responsable des finances",
+      "Responsable des relations publiques",
+      "Responsable des ressources humaines",
+      "Responsable informatique",
+      "Réceptionniste",
+    ],
+    "Personnel Médical": [
+      "Anesthésiste",
+      "Cardiologue",
+      "Chirurgien",
+      "Dentiste",
+      "Gynécologue",
+      "Médecin du travail",
+      "Médecin généraliste",
+      "Médecin interniste",
+      "Médecin urgentiste",
+      "Neurologue",
+      "Oncologue",
+      "Pédiatre",
+    ],
+    "Personnel Paramédical": [
+      "Assistant social",
+      "Diététicien(ne)",
+      "Ergothérapeute",
+      "Infirmier(ère) [soins généraux]",
+      "Infirmier(ère) anesthésiste",
+      "Infirmier(ère) bloc opératoire",
+      "Kinésithérapeute",
+      "Orthophoniste",
+      "Pharmacien hospitalier",
+      "Psychologue",
+    ],
+    "Personnel de Soutien Médical": [
+      "Aide-soignant(e)",
+      "Manipulateur radio",
+      "Prothésiste orthopédique",
+      "Technicien(ne) en imagerie médicale",
+      "Technicien(ne) en radiologie",
+      "Assistant(e) dentaire",
+    ],
+    "Services Techniques et Logistiques": [
+      "Agent de stérilisation",
+      "Agent d'entretien",
+      "Électricien",
+      "Gardien(ne) de sécurité",
+      "Gestionnaire des déchets hospitaliers",
+      "Plombier",
+      "Responsable de la blanchisserie",
+      "Responsable de la sécurité",
+      "Technicien de maintenance",
+    ],
+    "Service de Restauration": [
+      "Aide-cuisinier(e)",
+      "Chef cuisinier",
+      "Cuisinier(ère)",
+      "Responsable nutritionnel",
+      "Serveur(euse)",
+    ],
+    "Recherche et Formation": [
+      "Chercheur médical",
+      "Coordonnateur de recherche clinique",
+      "Enseignant/Professeur en médecine",
+      "Stagiaire",
+    ],
+  };
+
+  // Function to populate department dropdown
+  function populateDepartments() {
+    const departmentSelect = document.getElementById("department");
+    departmentSelect.innerHTML =
+      '<option value="">Sélectionner le département</option>';
+
+    Object.keys(departmentRoles).forEach((department) => {
+      const option = document.createElement("option");
+      option.value = department;
+      option.textContent = department;
+      departmentSelect.appendChild(option);
+    });
+  }
+
+  // Function to update roles based on selected department
+  function updateRoles() {
+    const departmentSelect = document.getElementById("department");
+    const roleSelect = document.getElementById("role");
+    const selectedDepartment = departmentSelect.value;
+
+    // Clear and disable role select by default
+    roleSelect.innerHTML = '<option value="">Sélectionner la fonction</option>';
+    roleSelect.disabled = true;
+
+    if (selectedDepartment && departmentRoles[selectedDepartment]) {
+      // Enable role select and populate options
+      roleSelect.disabled = false;
+      departmentRoles[selectedDepartment].forEach((role) => {
+        const option = document.createElement("option");
+        option.value = role;
+        option.textContent = role;
+        roleSelect.appendChild(option);
+      });
+    }
+  }
+
+  // Initialize the dropdowns when the page loads
+  document.addEventListener("DOMContentLoaded", () => {
+    populateDepartments();
+    const departmentSelect = document.getElementById("department");
+
+    // Add change event listener
+    departmentSelect.addEventListener("change", updateRoles);
+
+    // If department is already selected, update roles
+    if (departmentSelect.value) {
+      updateRoles();
+    }
+  });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script>
+  document.getElementById("downloadPdf").addEventListener("click", () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    // Add Header Information
+    pdf.setFontSize(16);
+    pdf.text("PluriMedic | Système de gestion de présence", 105, 20, {
+      align: "center",
+    });
+    pdf.setFontSize(10);
+    pdf.text("Adresse : 19, Rue 7, Babiole, Port-au-Prince, Haïti", 105, 30, {
+      align: "center",
+    });
+    pdf.text("Email: info@hopitalplurimedic.com", 105, 35, { align: "center" });
+    pdf.text("Téléphone: +509 46 16 3878", 105, 40, { align: "center" });
+
+    // Draw line after header
+    pdf.setLineWidth(0.5);
+    pdf.line(10, 45, 200, 45);
+
+    // Add Report Title and Date
+    pdf.setFontSize(14);
+    pdf.text("Liste des employés", 105, 55, { align: "center" });
+    pdf.text(`Date: ${new Date().toLocaleString()}`, 105, 65, {
+      align: "center",
+    });
+
+    const table = document.getElementById("employeeTable");
+    const headers = Array.from(table.querySelectorAll("thead th"))
+      .map((th) => th.innerText)
+      .filter((_, index) => index !== 0 && index !== 10); // Exclude "Profile Picture" (0) and "Actions" (10)
+
+    const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+      return Array.from(row.querySelectorAll("td"))
+        .map((td, index) => td.innerText)
+        .filter((_, index) => index !== 0 && index !== 10); // Exclude "Profile Picture" and "Actions"
+    });
+
+    pdf.autoTable({
+      head: [headers],
+      body: rows,
+      startY: 80,
+      theme: "grid",
+      styles: {
+        fontSize: 10,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [22, 160, 133],
+        textColor: [255, 255, 255],
+      },
+    });
+
+    // Save PDF
+    pdf.save("Liste_des_employés.pdf");
+  });
+</script>
+<script>
+  $(document).ready(function () {
+    $("#employeeTable").DataTable({
+      responsive: true,
+      language: {
+        emptyTable: "Aucune donnée disponible",
+        info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
+        infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
+        infoFiltered: "(filtré sur _MAX_ entrées au total)",
+        lengthMenu: "Afficher _MENU_ entrées",
+        loadingRecords: "Chargement...",
+        processing: "Traitement...",
+        search: "Rechercher:",
+        zeroRecords: "Aucun résultat trouvé",
+        paginate: {
+          first: "Premier",
+          last: "Dernier",
+          next: "Suivant",
+          previous: "Précédent",
+        },
+      },
+    });
+  });
+</script>
+
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%} {% for category, message in messages %}
+<div
+  class="alert alert-{{ category }} alert-dismissible fade show"
+  role="alert"
+>
+  {{ message }}
+  <button
+    type="button"
+    class="btn-close"
+    data-bs-dismiss="alert"
+    aria-label="Close"
+  ></button>
+</div>
+{% endfor %} {% endif %} {% endwith %} {% endblock %}

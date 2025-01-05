@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Facial Verification Control Panel -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-face-viewfinder me-2"></i>Panneau de Contrôle de Vérification Faciale
+            </h5>
+            <div class="verification-status">
+                <span class="badge {{ 'bg-success' if face_recg_enabled else 'bg-danger' }}" id="verificationStatusBadge">
+                    <i class="fas {{ 'fa-check-circle' if face_recg_enabled else 'fa-times-circle' }} me-1"></i>
+                    {{ 'Activé' if face_recg_enabled else 'Désactivé' }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group mb-3">
+                        <input type="password" class="form-control" id="verificationCode" placeholder="Entrez le code de vérification">
+                        <button class="btn btn-primary" type="button" id="toggleVerification">
+                            <i class="fas fa-key me-1"></i>Appliquer le Code
+                        </button>
+                    </div>
+                    <small class="text-muted">Utilisez le code pour activer/désactiver la vérification faciale</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="verificationToggle" {% if face_recg_enabled %}checked{% endif %} disabled>
+                        <label class="form-check-label" for="verificationToggle">Vérification Faciale</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Information Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-clock me-2"></i>Présence en Temps Réel
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Employé</th>
+                            <th>Département</th>
+                            <th>Heure d'arrivée</th>
+                            <th>Validation Faciale</th>
+                            <th>Heure de départ</th>
+                            <th>Total d'heures</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_data %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename=record.photo) }}" class="rounded-circle me-2 img-fluid" alt="Profile" height="50" width="50">
+                                    <div>
+                                        <div class="fw-bold">{{ record.employee }}</div>
+                                        <small class="text-muted">ID: {{ record.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ record.department }}</td>
+                            <td>
+                                <div class="text-success">
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    {{ record.check_in }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if record.face_validation else 'bg-danger' }}">
+                                    <i class="fas {{ 'fa-check' if record.face_validation else 'fa-times' }} me-1"></i>
+                                    {{ 'Vérifié' if record.face_validation else 'Non Vérifié' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if record.check_out %}
+                                <div class="text-success">
+                                    <i class="fas fa-sign-out-alt me-1"></i>
+                                    {{ record.check_out }}
+                                </div>
+                                {% else %}
+                                <div class="text-danger">
+                                    <i class="fas fa-minus-circle me-1"></i>
+                                    Pas Vérifié
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.total_hours or '--:--' }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if record.status == 'Completed' else 'bg-warning' }}">
+                                    <i class="fas {{ 'fa-check-circle' if record.status == 'Completed' else 'fa-clock' }} me-1"></i>
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const table = new DataTable('#attendanceTable', {
+            responsive: true,
+            order: [[2, 'desc']],
+            language: {
+                search: "Recherche rapide:"
+            }
+        });
+
+        const toggleVerificationButton = document.getElementById('toggleVerification');
+        const verificationCodeInput = document.getElementById('verificationCode');
+        const verificationBadge = document.getElementById('verificationStatusBadge');
+        const verificationToggle = document.getElementById('verificationToggle');
+
+        toggleVerificationButton.addEventListener('click', () => {
+            const code = verificationCodeInput.value.trim();
+            let face;
+            if (code === "A7c!v@P#M21")
+                face = true;
+            else if (code === "D3$@c7!vP!uR!M3D!c")
+                face = false;
+            else {
+                showAlert('Code de vérification invalide', 'danger');
+                return;
+            }
+
+            fetch('/general', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ 'face-recg':face })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateVerificationStatus(data["face-recg"]);
+                    showAlert(`Vérification Faciale ${data["face-recg"]?"Activée":"Désactivée"}`, 'success');
+                } else {
+                    showAlert('Quelque chose a mal tourné', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Une erreur s'est produite lors de la mise à jour du statut de vérification.', 'danger');
+                console.error(error);
+            });
+
+            verificationCodeInput.value = '';
+        });
+
+        function updateVerificationStatus(enabled) {
+            if (enabled) {
+                verificationBadge.classList.replace('bg-danger', 'bg-success');
+                verificationBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Activé';
+                verificationToggle.checked = true;
+            } else {
+                verificationBadge.classList.replace('bg-success', 'bg-danger');
+                verificationBadge.innerHTML = '<i class="fas fa-times-circle me-1"></i>Désactivé';
+                verificationToggle.checked = false;
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            const firstCard = document.querySelector('.card:first-child');
+            firstCard.insertAdjacentHTML('beforebegin', alertHtml);
+
+            setTimeout(() => {
+                document.querySelector('.alert').remove();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock %}

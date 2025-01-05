@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">QR Code Scanner</h2>
+                    
+                    <!-- Scanner container -->
+                    <div id="reader" style="width: 100%; min-height: 400px;"></div>
+                    
+                    <!-- Status messages -->
+                    <div id="scanResult" class="alert mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include HTML5-QRCode library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const html5QrcodeScanner = new Html5Qrcode("reader");
+    const scanResult = document.getElementById('scanResult');
+    
+    function onScanSuccess(decodedText, decodedResult) {
+        // Stop scanning
+        html5QrcodeScanner.stop().then(() => {
+            console.log('Scanner stopped.');
+            
+            // Send the QR code data to the server
+            fetch('/scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    qr_data: decodedText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Show success message
+                scanResult.style.display = 'block';
+                if (data.status === 'success') {
+                    scanResult.className = 'alert alert-success mt-3';
+                    scanResult.textContent = data.message;
+                    
+                    // Reload scanner after 3 seconds
+                    setTimeout(() => {
+                        startScanner();
+                        scanResult.style.display = 'none';
+                    }, 3000);
+                } else {
+                    scanResult.className = 'alert alert-danger mt-3';
+                    scanResult.textContent = data.message;
+                    
+                    // Reload scanner after 2 seconds on error
+                    setTimeout(() => {
+                        startScanner();
+                        scanResult.style.display = 'none';
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                scanResult.style.display = 'block';
+                scanResult.className = 'alert alert-danger mt-3';
+                scanResult.textContent = 'Error processing QR code. Please try again.';
+                
+                // Reload scanner after error
+                setTimeout(() => {
+                    startScanner();
+                    scanResult.style.display = 'none';
+                }, 2000);
+            });
+        });
+    }
+
+    function onScanError(errorMessage) {
+        // Handle scan error
+        console.error(errorMessage);
+    }
+
+    function startScanner() {
+        html5QrcodeScanner.start(
+            { facingMode: "environment" }, // Use back camera if available
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            onScanSuccess,
+            onScanError
+        );
+    }
+
+    // Start the scanner initially
+    startScanner();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Modal for Username and Password Update -->
+<div class="modal fade" id="updateAdminModal" tabindex="-1" aria-labelledby="updateAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateAdminModalLabel">Mettre à jour les identifiants de l'administrateur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateAdminForm">
+                    <div class="mb-3">
+                        <label for="adminUsername" class="form-label">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" id="adminUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminPassword" class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="adminPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminConfirmPassword" class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" class="form-control" id="adminConfirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+                <div id="updateResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Tableau de bord de l'administrateur</h2>
+    
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Actions rapides</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-warning">
+                            <i class="fas fa-users"></i> Tableau de bord
+                        </a>
+                        <a href="{{ url_for('employees') }}" class="btn btn-primary">
+                            <i class="fas fa-users"></i> Gérer les employés
+                        </a>
+                        <a href="{{ url_for('scan') }}" class="btn btn-success">
+                            <i class="fas fa-qrcode"></i> Scanner le QR Code
+                        </a>
+                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#updateAdminModal">
+                            <i class="fas fa-cogs"></i> Mettre à jour le nom d'utilisateur/mot de passe
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Attendance -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Présence d'aujourd'hui</h5>
+                    <button onclick="updateAttendanceList()" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-sync"></i> Actualiser
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="attendance-list">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    function updateAttendanceList() {
+        const attendanceList = document.getElementById('attendance-list');
+        
+        attendanceList.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        `;
+        
+        fetch('/today_attendance')
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    attendanceList.innerHTML = `
+                        <div class="text-center text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-2"></i>
+                            <p>Aucun enregistrement de présence pour aujourd'hui</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '<div class="table-responsive"><table id="attendanceTable" class="table table-hover">';
+                html += `
+                    <thead>
+                        <tr>
+                            <th>PluriId</th>
+                            <th>Nom complet</th>
+                            <th>Département</th>
+                            <th>Fonction</th>
+                            <th>Heure d'arrivée</th>
+                            <th>Heure de départ</th>
+                            <th>Total d'heures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                data.forEach(record => {
+                    html += `
+                        <tr>
+                            <td>${record.pluri_id}</td>
+                            <td>${record.employee_name}</td>
+                            <td>${record.department}</td>
+                            <td>${record.position}</td>
+                            <td>${record.check_in}</td>
+                            <td>${record.check_out || '<span class="text-muted">Pas encore parti</span>'}</td>
+                            <td>${record.total_hours ? record.total_hours.toFixed(2) : '-'}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div>';
+                attendanceList.innerHTML = html;
+                
+            })
+            .catch(error => {
+                console.error('Erreur :', error);
+                attendanceList.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Erreur lors du chargement des données de présence. Veuillez réessayer.
+                    </div>
+                `;
+            });
+    }
+    
+    updateAttendanceList();
+    setInterval(updateAttendanceList, 30000);
+    
+    $(document).on('click', '[onclick="updateAttendanceList()"]', function() {
+        if ($.fn.DataTable.isDataTable('#attendanceTable')) {
+            $('#attendanceTable').DataTable().destroy();
+        }
+    });
+    </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const updateForm = document.getElementById('updateAdminForm');
+        const updateResult = document.getElementById('updateResult');
+
+        updateForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            const confirmPassword = document.getElementById('adminConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                updateResult.innerHTML = `<div class="alert alert-danger">Les mots de passe ne correspondent pas!</div>`;
+                return;
+            }
+            updateResult.innerHTML = `<div class="spinner-border text-primary" role="status">
+                                          <span class="visually-hidden">Mise à jour...</span>
+                                       </div>`;
+            fetch('/update-admin-credentials', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateResult.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                $('#updateAdminModal').modal('hide');
+            })
+            .catch(error => {
+                console.error('Erreur :', error);
+                updateResult.innerHTML = `<div class="alert alert-danger">Erreur lors de la mise à jour des identifiants.</div>`;
+            });
+        });
+    });
+</script>
+<script>
+    $('#attendanceTable').DataTable({
+        responsive: true,
+        language: {
+            url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json"
+        }
+    });
+</script>
+
+{% endblock %}

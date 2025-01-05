@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Crédits</h1>
+        
+        <div class="space-y-8">
+            <!-- Développeurs -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Développeurs</h2>
+                
+                <!-- Jyvor -->
+                <div class="mb-6">
+                    <div class="flex items-start">
+                        <div class="bg-blue-100 rounded-full p-3">
+                            <i class="fas fa-code text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-800">Jyvor Slaadel Mortimer</h3>
+                            <p class="text-gray-600 mt-1">Développeur Principal</p>
+                            <p class="text-gray-500 mt-2">Responsable du développement et de l'implémentation du code</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fabrice -->
+                <div>
+                    <div class="flex items-start">
+                        <div class="bg-green-100 rounded-full p-3">
+                            <i class="fas fa-book text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-800">Fabrice Premier Lemann Junior</h3>
+                            <p class="text-gray-600 mt-1">Documentation Technique</p>
+                            <p class="text-gray-500 mt-2">Responsable de la documentation et de la rédaction technique</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technologies -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Technologies Utilisées</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fab fa-python text-blue-500 text-2xl"></i>
+                        <span class="text-gray-700">Python (Flask)</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fab fa-html5 text-orange-500 text-2xl"></i>
+                        <span class="text-gray-700">HTML5</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fab fa-css3-alt text-blue-500 text-2xl"></i>
+                        <span class="text-gray-700">CSS3 (Tailwind CSS)</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fab fa-js text-yellow-500 text-2xl"></i>
+                        <span class="text-gray-700">JavaScript</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version -->
+            <div class="text-center text-gray-500 mt-8">
+                <p>Version 1.0.0</p>
+                <p class="mt-2"> 2025 Système de Gestion de Présences, PluriMedic. Tous droits réservés.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

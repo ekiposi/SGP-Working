@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .form-input,
+    .form-select {
+      @apply transition-colors duration-200;
+    }
+  
+    .form-group {
+      @apply relative;
+    }
+  
+    .form-group:focus-within label {
+      @apply text-blue-600;
+    }
+  
+    /* Table Styling */
+    .dataTables_wrapper {
+      margin: 20px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  
+    .dataTables_filter {
+      margin-bottom: 20px;
+    }
+  
+    .dataTables_filter input {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-left: 8px;
+    }
+  
+    .dataTables_length select {
+      padding: 6px 24px 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin: 0 8px;
+    }
+  
+    table.dataTable {
+      border-collapse: collapse;
+      width: 100%;
+    }
+  
+    table.dataTable thead th {
+      background-color: #f8fafc;
+      color: #1e293b;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e2e8f0;
+      text-align: left;
+    }
+  
+    table.dataTable tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #475569;
+    }
+  
+    table.dataTable tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+  
+    .dataTables_paginate {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+  
+    .dataTables_paginate .paginate_button {
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #475569;
+    }
+  
+    .dataTables_paginate .paginate_button:hover {
+      background-color: #f1f5f9;
+    }
+  
+    .dataTables_paginate .paginate_button.current {
+      background-color: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+  
+    .dataTables_paginate .paginate_button.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  
+    /* Custom scrollbar for better appearance */
+    .dataTables_wrapper::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+  
+    .dataTables_wrapper::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+  
+    .dataTables_wrapper::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  
+    .dataTables_wrapper::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+<div class="container mt-4">
+    <!-- Facial Verification Control Panel -->
+    <div class="card mb-4 card-top">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-face-viewfinder me-2"></i>Contrôle par la Verification Faciale
+            </h5>
+            <div class="verification-status">
+                <span class="badge {{ 'bg-success' if face_recg_enabled else 'bg-danger' }}" id="verificationStatusBadge">
+                    <i class="fas {{ 'fa-check-circle' if face_recg_enabled else 'fa-times-circle' }} me-1"></i>
+                    {{ 'Activé' if face_recg_enabled else 'Désactivé' }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group mb-3">
+                        <input type="password" class="form-control" id="verificationCode" placeholder="Enter verification code">
+                        <button class="btn btn-primary" type="button" id="toggleVerification">
+                            <i class="fas fa-key me-1"></i>Entrer le Code
+                        </button>
+                    </div>
+                    <small class="text-muted">Utilisez le code pour activer/désactiver la verification faciale</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="verificationToggle" {% if face_recg_enabled %}checked{% endif %} disabled>
+                        <label class="form-check-label" for="verificationToggle">Vérification Faciale</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Information Table -->
+    <div class="card card-bottom">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-clock me-2"></i>Présences en temps réel
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Employé</th>
+                            <th>Départment</th>
+                            <th>Arrivee</th>
+                            <th>Validation de la Face</th>
+                            <th>Depart</th>
+                            <th>Heures Totales</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_data %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename=record.photo) }}" class="me-2 img-fluid" alt="Profile" height="50" width="50" style="border-radius: 100%;">
+                                    <div>
+                                        <div class="fw-bold">{{ record.employee }}</div>
+                                        <small class="text-muted">ID: {{ record.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ record.department }}</td>
+                            <td>
+                                <div class="text-success">
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    {{ record.check_in }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if record.face_validation else 'bg-danger' }}">
+                                    <i class="fas {{ 'fa-check' if record.face_validation else 'fa-times' }} me-1"></i>
+                                    {{ 'Vérifié' if record.face_validation else 'Non Verifié' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if record.check_out %}
+                                <div class="text-success">
+                                    <i class="fas fa-sign-out-alt me-1"></i>
+                                    {{ record.check_out }}
+                                </div>
+                                {% else %}
+                                <div class="text-danger">
+                                    <i class="fas fa-minus-circle me-1"></i>
+                                    Aucun départ
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.total_hours or '--:--' }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if record.status == 'Terminé' else 'bg-warning' }}">
+                                    <i class="fas {{ 'fa-check-circle' if record.status == 'Terminé' else 'fa-clock' }} me-1"></i>
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Hide elements initially
+    gsap.set([".card-top", ".card-bottom"], {
+        visibility: "hidden",
+        opacity: 0
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize DataTable
+        const table = new DataTable('#attendanceTable', {
+            responsive: true,
+            language: {
+                emptyTable: "Aucune donnée disponible",
+                info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
+                infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
+                infoFiltered: "(filtré sur _MAX_ entrées au total)",
+                lengthMenu: "Afficher _MENU_ entrées",
+                loadingRecords: "Chargement...",
+                processing: "Traitement...",
+                search: "Rechercher:"
+            }
+        });
+
+        // Create and play animation timeline
+        gsap.set([".card-top", ".card-bottom"], {
+            visibility: "visible"
+        });
+        
+        const tl = gsap.timeline({
+            defaults: {
+                duration: 0.8,
+                ease: "power2.out"
+            }
+        });
+
+        tl.fromTo(".card-top", 
+            { 
+                opacity: 0,
+                x: -50,
+            },
+            {
+                opacity: 1,
+                x: 0,
+                duration: 1,
+                ease: "back.out(1.7)"
+            }
+        ).fromTo(".card-bottom",
+            {
+                opacity: 0,
+                x: 50,
+            },
+            {
+                opacity: 1,
+                x: 0,
+                duration: 1,
+                ease: "back.out(1.7)"
+            },
+            "-=0.5"
+        );
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleVerificationButton = document.getElementById('toggleVerification');
+        const verificationCodeInput = document.getElementById('verificationCode');
+        const verificationBadge = document.getElementById('verificationStatusBadge');
+        const verificationToggle = document.getElementById('verificationToggle');
+
+        toggleVerificationButton.addEventListener('click', () => {
+            const code = verificationCodeInput.value.trim();
+            let face;
+            if (code === "A7c!v@P#M21")
+                face = true;
+            else if (code === "D3$@c7!vP!uR!M3D!c")
+                face = false;
+            else {
+                showAlert('Code Incorrect', 'danger');
+                return;
+            }
+
+            fetch('/general', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ 'face-recg':face })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateVerificationStatus(data["face-recg"]);
+                    showAlert(`Face Recognition ${data["face-recg"]?"Enabled":"Disabled"}`, 'success');
+                } else {
+                    showAlert('Une erreure est survenue lors de la mise à jour du statut de vérification.', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Une erreure est survenue lors de la mise à jour du statut de vérification.', 'danger');
+                console.error(error);
+            });
+
+            verificationCodeInput.value = '';
+        });
+
+        function updateVerificationStatus(enabled) {
+            if (enabled) {
+                verificationBadge.classList.replace('bg-danger', 'bg-success');
+                verificationBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Activé';
+                verificationToggle.checked = true;
+            } else {
+                verificationBadge.classList.replace('bg-success', 'bg-danger');
+                verificationBadge.innerHTML = '<i class="fas fa-times-circle me-1"></i>Désactivé';
+                verificationToggle.checked = false;
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            const firstCard = document.querySelector('.card:first-child');
+            firstCard.insertAdjacentHTML('beforebegin', alertHtml);
+
+            setTimeout(() => {
+                document.querySelector('.alert').remove();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock %}

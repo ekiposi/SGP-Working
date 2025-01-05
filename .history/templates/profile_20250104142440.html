@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Employee Info Card -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations de l'employé</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if current_user.employee.photo %}
+                        <img src="{{ url_for('static', filename=current_user.employee.photo) }}" class="rounded-circle"
+                            style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 150px; height: 150px; font-size: 48px;">
+                            {{ current_user.employee.first_name[0] }}{{ current_user.employee.last_name[0] }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <h5 class="text-center mb-3">{{ current_user.employee.full_name }}</h5>
+
+                    <div class="mb-2">
+                        <strong>ID de l'employé:</strong> {{ current_user.employee.pluri_id }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Département:</strong> {{ current_user.employee.department }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Fonction:</strong> {{ current_user.employee.position }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Email:</strong> {{ current_user.employee.email }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Téléphone:</strong> {{ current_user.employee.phone or 'Non fourni' }}
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2">
+                        <!-- <a href="{{ url_for('static', filename=current_user.employee.generate_qr_code()) }}" 
+                           class="btn btn-primary" 
+                           download="qr_{{ current_user.employee.pluri_id }}.png">
+                            <i class="fas fa-download"></i> Download QR Code
+                        </a> -->
+                        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="fas fa-key"></i> Changer le mot de passe
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Attendance Card -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Présences enregistrées aujourd'hui</h5>
+                </div>
+                <div class="card-body">
+                    {% if today_attendance %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Heure d'arrivée</h6>
+                                <p class="mb-0">{{ today_attendance.check_in.strftime('%I:%M %p') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert {{ 'alert-info' if today_attendance.check_out else 'alert-warning' }}">
+                                <h6 class="alert-heading">Heure de départ</h6>
+                                <p class="mb-0">
+                                    {% if today_attendance.check_out %}
+                                    {{ today_attendance.check_out.strftime('%I:%M %p') }}
+                                    {% else %}
+                                    Not checked out
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if today_attendance.check_out %}
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading">Nombre total d'heures</h6>
+                        <p class="mb-0">{{ "%.2f"|format(today_attendance.total_hours) }} heures</p>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">Aucune présence enregistrée aujourd'hui</h6>
+                        <p class="mb-0">Utilisez votre QR code pour vous connecter lorsque vous arrivez.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Past Attendance Records -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Présences passées</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary filter-btn" id="week"
+                            onclick="filterAttendance('week')">Cette semaine</button>
+                        <button class="btn btn-sm btn-outline-secondary filter-btn" id="month"
+                            onclick="filterAttendance('month')">Ce mois</button>
+                        <button class="btn btn-sm btn-outline-secondary filter-btn" id="all"
+                            onclick="filterAttendance('all')">Toutes les fois</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Heure d'arrivée</th>
+                                    <th>Heure de départ</th>
+                                    <th>Total des heures</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in past_attendance %}
+                                <tr>
+                                    <td>{{ attendance.check_in.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ attendance.check_in.strftime('%I:%M %p') }}</td>
+                                    <td>
+                                        {% if attendance.check_out %}
+                                        {{ attendance.check_out.strftime('%I:%M %p') }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.total_hours %}
+                                        {{ "%.2f"|format(attendance.total_hours) }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Changer le mot de passe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('change_password') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Mot de passe actuel</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Nouveau mot de passe</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirmer le nouveau mot de passe</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Changer le mot de passe</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const buttons = document.querySelectorAll('.filter-btn');
+
+    function clearActiveClass() {
+        buttons.forEach(button => button.classList.remove('active'));
+    }
+
+    // Function to filter attendance and set the active button
+    function filterAttendance(filterType) {
+        fetch(`/filter_attendance?filter=${filterType}`)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('.table tbody');
+                tableBody.innerHTML = '';
+
+                // Set active button
+                clearActiveClass();
+                document.getElementById(filterType).classList.add('active');
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                               Aucune donnée trouvée.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                data.forEach(record => {
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td>${record.date}</td>
+                            <td>${record.check_in}</td>
+                            <td>${record.check_out}</td>
+                            <td>${record.total_hours}</td>
+                        </tr>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching filtered attendance:', error);
+                alert('Une erreur s’est produite lors du chargement des données. Veuillez réessayer plus tard.');
+            });
+    }
+    filterAttendance("week");
+</script>
+<style>
+    .filter-btn {
+        border: 1px solid transparent;
+        color: #333;
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+        background-color: #e2e6ea;
+    }
+
+    .filter-btn.active {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+</style>
+
+{% endblock %}

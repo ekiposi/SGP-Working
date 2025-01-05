@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // Define the departments and their associated roles
+        const departmentRoles = {
+            'Administration et Direction': [
+                'Comptable',
+                'Directeur(trice) médical(e)',
+                'Directeur(trice) de l\'hôpital',
+                'Gestionnaire des approvisionnements',
+                'Gestionnaire de la qualité',
+                'Gestionnaire des opérations',
+                'Responsable des finances',
+                'Responsable des relations publiques',
+                'Responsable des ressources humaines',
+                'Responsable informatique',
+                'Réceptionniste'
+            ],
+            'Personnel Médical': [
+                'Anesthésiste',
+                'Cardiologue',
+                'Chirurgien',
+                'Dentiste',
+                'Gynécologue',
+                'Médecin du travail',
+                'Médecin généraliste',
+                'Médecin interniste',
+                'Médecin urgentiste',
+                'Neurologue',
+                'Oncologue',
+                'Pédiatre'
+            ],
+            'Personnel Paramédical': [
+                'Assistant social',
+                'Diététicien(ne)',
+                'Ergothérapeute',
+                'Infirmier(ère) [soins généraux]',
+                'Infirmier(ère) anesthésiste',
+                'Infirmier(ère) bloc opératoire',
+                'Kinésithérapeute',
+                'Orthophoniste',
+                'Pharmacien hospitalier',
+                'Psychologue'
+            ],
+            'Personnel de Soutien Médical': [
+                'Aide-soignant(e)',
+                'Manipulateur radio',
+                'Prothésiste orthopédique',
+                'Technicien(ne) en imagerie médicale',
+                'Technicien(ne) en radiologie',
+                'Assistant(e) dentaire'
+            ],
+            'Services Techniques et Logistiques': [
+                'Agent de stérilisation',
+                'Agent d\'entretien',
+                'Électricien',
+                'Gardien(ne) de sécurité',
+                'Gestionnaire des déchets hospitaliers',
+                'Plombier',
+                'Responsable de la blanchisserie',
+                'Responsable de la sécurité',
+                'Technicien de maintenance'
+            ],
+            'Service de Restauration': [
+                'Aide-cuisinier(e)',
+                'Chef cuisinier',
+                'Cuisinier(ère)',
+                'Responsable nutritionnel',
+                'Serveur(euse)'
+            ],
+            'Recherche et Formation': [
+                'Chercheur médical',
+                'Coordonnateur de recherche clinique',
+                'Enseignant/Professeur en médecine',
+                'Stagiaire'
+            ]
+        };
+
+        // Function to populate department dropdown
+        function populateDepartments() {
+            const departmentSelect = document.getElementById('department');
+            departmentSelect.innerHTML = '<option value="">Select Department</option>';
+            
+            Object.keys(departmentRoles).forEach(department => {
+                const option = document.createElement('option');
+                option.value = department;
+                option.textContent = department;
+                departmentSelect.appendChild(option);
+            });
+        }
+
+        // Function to update roles based on selected department
+        function updateRoles() {
+            const departmentSelect = document.getElementById('department');
+            const roleSelect = document.getElementById('role');
+            const selectedDepartment = departmentSelect.value;
+            
+            roleSelect.innerHTML = '<option value="">Select Role</option>';
+            
+            if (selectedDepartment) {
+                departmentRoles[selectedDepartment].forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = role;
+                    roleSelect.appendChild(option);
+                });
+                roleSelect.disabled = false;
+            } else {
+                roleSelect.disabled = true;
+            }
+        }
+
+        // Initialize the dropdowns when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDepartments();
+            document.getElementById('department').addEventListener('change', updateRoles);
+        });
+    </script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">EMS Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="employeeListBtn">Employee List</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="addEmployeeBtn">Add Employee</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Registration Form -->
+        <div id="registrationForm" class="card">
+            <div class="card-header">
+                <h3>Register New Employee</h3>
+            </div>
+            <div class="card-body">
+                <form id="employeeForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="fullName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="department" class="form-label">Department</label>
+                            <select class="form-select" id="department" required>
+                                <option value="">Select Department</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" required disabled>
+                                <option value="">Select Role</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="emergencyContact" class="form-label">Emergency Contact</label>
+                            <input type="text" class="form-control" id="emergencyContact">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register Employee</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Employee List -->
+        <div id="employeeList" class="card mt-4" style="display: none;">
+            <div class="card-header">
+                <h3>Employee List</h3>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search employees...">
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Role</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Modal -->
+        <div class="modal fade" id="qrCodeModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Employee QR Code</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="qrCodeImage" src="" alt="QR Code" class="img-fluid">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="downloadQR">Download</button>
+                        <button type="button" class="btn btn-success" id="printQR">Print</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

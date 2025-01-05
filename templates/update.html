@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Mettre à jour les données de l'employé</h2>
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ csrf_token }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        
+                        <!-- Photo -->
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Photo</label>
+                            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                            {% if employee.photo %}
+                                <img src="{{ url_for('static', filename=employee.photo) }}" alt="Current Photo" class="mt-2" style="width: 100px; height: 100px;">
+                            {% endif %}
+                        </div>
+                        
+                        <!-- First Name -->
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">Prénom</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ employee.first_name }}" required>
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Nom de famille</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ employee.last_name }}" required>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ employee.email }}" required>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Numéro de téléphone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ employee.phone }}">
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="mb-3">
+                            <label for="gender" class="form-label">Sexe</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="male" {% if employee.gender == 'male' %}selected{% endif %}>Male</option>
+                                <option value="female" {% if employee.gender == 'female' %}selected{% endif %}>Female</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Département</label>
+                            <select class="form-select" id="department" name="department" required>
+                                <option value="">Sélectionner le départment</option>
+                            </select>
+                        </div>
+                    
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Fonction</label>
+                            <select class="form-select" id="role" name="role" required disabled>
+                                <option value="">Sélectionner la fonction</option>
+                            </select>
+                        </div>
+
+                        <!-- Hire Date -->
+                        <div class="mb-3">
+                            <label for="hire_date" class="form-label">Date d'embauche</label>
+                            <input type="date" class="form-control" id="hire_date" name="hire_date" value="{{ employee.hire_date }}">
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="mb-3">
+                            <label for="dob" class="form-label">Date de naissance</label>
+                            <input type="date" class="form-control" id="dob" name="dob" value="{{ employee.dob }}">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Mettre à jour les informations de l'employé</button>
+                        <a href="{{ url_for('employees') }}" class="btn btn-secondary">Annuler</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Define the departments and their associated roles
+    const departmentRoles = {
+        'Administration et Direction': [
+            'Comptable',
+            'Directeur(trice) médical(e)',
+            'Directeur(trice) de l\'hôpital',
+            'Gestionnaire des approvisionnements',
+            'Gestionnaire de la qualité',
+            'Gestionnaire des opérations',
+            'Responsable des finances',
+            'Responsable des relations publiques',
+            'Responsable des ressources humaines',
+            'Responsable informatique',
+            'Réceptionniste'
+        ],
+        'Personnel Médical': [
+            'Anesthésiste',
+            'Cardiologue',
+            'Chirurgien',
+            'Dentiste',
+            'Gynécologue',
+            'Médecin du travail',
+            'Médecin généraliste',
+            'Médecin interniste',
+            'Médecin urgentiste',
+            'Neurologue',
+            'Oncologue',
+            'Pédiatre'
+        ],
+        'Personnel Paramédical': [
+            'Assistant social',
+            'Diététicien(ne)',
+            'Ergothérapeute',
+            'Infirmier(ère) [soins généraux]',
+            'Infirmier(ère) anesthésiste',
+            'Infirmier(ère) bloc opératoire',
+            'Kinésithérapeute',
+            'Orthophoniste',
+            'Pharmacien hospitalier',
+            'Psychologue'
+        ],
+        'Personnel de Soutien Médical': [
+            'Aide-soignant(e)',
+            'Manipulateur radio',
+            'Prothésiste orthopédique',
+            'Technicien(ne) en imagerie médicale',
+            'Technicien(ne) en radiologie',
+            'Assistant(e) dentaire'
+        ],
+        'Services Techniques et Logistiques': [
+            'Agent de stérilisation',
+            'Agent d\'entretien',
+            'Électricien',
+            'Gardien(ne) de sécurité',
+            'Gestionnaire des déchets hospitaliers',
+            'Plombier',
+            'Responsable de la blanchisserie',
+            'Responsable de la sécurité',
+            'Technicien de maintenance'
+        ],
+        'Service de Restauration': [
+            'Aide-cuisinier(e)',
+            'Chef cuisinier',
+            'Cuisinier(ère)',
+            'Responsable nutritionnel',
+            'Serveur(euse)'
+        ],
+        'Recherche et Formation': [
+            'Chercheur médical',
+            'Coordonnateur de recherche clinique',
+            'Enseignant/Professeur en médecine',
+            'Stagiaire'
+        ]
+    };
+
+    // Function to populate department dropdown
+    function populateDepartments() {
+        const departmentSelect = document.getElementById('department');
+        departmentSelect.innerHTML = '<option value="">Select Department</option>';
+        
+        Object.keys(departmentRoles).forEach(department => {
+            const option = document.createElement('option');
+            option.value = department;
+            option.textContent = department;
+            if (department == '{{ employee.department }}')
+                option.selected = true;
+            departmentSelect.appendChild(option);
+        });
+    }
+
+    // Function to update roles based on selected department
+    function updateRoles() {
+        const departmentSelect = document.getElementById('department');
+        const roleSelect = document.getElementById('role');
+        const selectedDepartment = departmentSelect.value;
+        
+        // Clear and disable role select by default
+        roleSelect.innerHTML = '<option value="">Select Role</option>';
+        roleSelect.disabled = true;
+        
+        if (selectedDepartment && departmentRoles[selectedDepartment]) {
+            // Enable role select and populate options
+            roleSelect.disabled = false;
+            departmentRoles[selectedDepartment].forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                if (role == '{{ employee.position }}')
+                    option.selected = true;
+                roleSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Initialize the dropdowns when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        populateDepartments();
+        const departmentSelect = document.getElementById('department');
+        
+        departmentSelect.addEventListener('change', updateRoles);
+        
+        // If department is already selected, update roles
+        if (departmentSelect.value) {
+            updateRoles();
+        }
+    });
+</script>
+{% endblock %}

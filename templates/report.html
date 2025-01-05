@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .form-input,
+    .form-select {
+      @apply transition-colors duration-200;
+    }
+  
+    .form-group {
+      @apply relative;
+    }
+  
+    .form-group:focus-within label {
+      @apply text-blue-600;
+    }
+  
+    /* Table Styling */
+    .dataTables_wrapper {
+      margin: 20px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  
+    .dataTables_filter {
+      margin-bottom: 20px;
+    }
+  
+    .dataTables_filter input {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-left: 8px;
+    }
+  
+    .dataTables_length select {
+      padding: 6px 24px 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin: 0 8px;
+    }
+  
+    table.dataTable {
+      border-collapse: collapse;
+      width: 100%;
+    }
+  
+    table.dataTable thead th {
+      background-color: #f8fafc;
+      color: #1e293b;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e2e8f0;
+      text-align: left;
+    }
+  
+    table.dataTable tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #475569;
+    }
+  
+    table.dataTable tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+  
+    .dataTables_paginate {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+  
+    .dataTables_paginate .paginate_button {
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #475569;
+    }
+  
+    .dataTables_paginate .paginate_button:hover {
+      background-color: #f1f5f9;
+    }
+  
+    .dataTables_paginate .paginate_button.current {
+      background-color: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+  
+    .dataTables_paginate .paginate_button.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  
+    /* Custom scrollbar for better appearance */
+    .dataTables_wrapper::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+  
+    .dataTables_wrapper::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+  
+    .dataTables_wrapper::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  
+    .dataTables_wrapper::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .card-top {
+        opacity: 0;
+        
+    
+    }
+
+    .card-bottom {
+        opacity: 0;
+        
+    
+    }
+  </style>
+<div class="container mt-4">
+    <h2 class="mb-4">Reports</h2>
+
+    <!-- Filter Form -->
+    <div class="card mb-4 card-top">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Filtrer les rapports</h5>
+        </div>
+        <div class="card-body">
+            <form id="reportFilterForm">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="employeeName" class="form-label">Nom de l'employé</label>
+                        <input type="text" class="form-control" id="employeeName" placeholder="Entrer le nom de l'employé">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="pluriId" class="form-label">PluriId</label>
+                        <input type="text" class="form-control" id="pluriId" placeholder="Entrer le PluriId">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="department" class="form-label">Départment</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="">Tous les départements</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="function" class="form-label">Fonction</label>
+                        <select class="form-select" id="function" name="function">
+                            <option value="">Toutes les fonctions</option>
+                            <!-- Add more functions as needed -->
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="dateFrom" class="form-label">Date de début</label>
+                        <input type="date" class="form-control" id="dateFrom">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="dateTo" class="form-label">Date de fin</label>
+                        <input type="date" class="form-control" id="dateTo">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Appliquer les filtres</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">Réinitialiser les filtres</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Table -->
+    <div class="card card-bottom">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Résultat des rapports</h5>
+            <button class="btn btn-success" onclick="downloadPDF()">
+                <i class="fas fa-download me-2"></i>Télécharger le rapport
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="reportTable">
+                    <thead>
+                        <tr>
+                            <th>PluriId</th>
+                            <th>Nom complet</th>
+                            <th>Départment</th>
+                            <th>Fonction</th>
+                            <th>Total Heures travaillées</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Table will be populated by DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Set initial states
+        gsap.set([".card-top", ".card-bottom"], {
+            visibility: "visible"
+        });
+  
+        // Create timeline for better control
+        const tl = gsap.timeline({
+            defaults: {
+                duration: 0.8,
+                ease: "power2.out"
+            }
+        });
+  
+        // Add animations to timeline
+        tl.fromTo(".card-top", 
+            { 
+                opacity: 0,
+                x: -50,
+            },
+            {
+                opacity: 1,
+                x: 0,
+                duration: 1,
+                ease: "back.out(1.7)"
+            }
+        ).fromTo(".card-bottom",
+            {
+                opacity: 0,
+                x: 50,
+            },
+            {
+                opacity: 1,
+                x: 0,
+                duration: 1,
+                ease: "back.out(1.7)"
+            },
+            "-=0.5" // Start slightly before the first animation ends
+        );
+    });
+  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize DataTable with all options
+    const reportTable = $('#reportTable').DataTable({
+        responsive: true,
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: "{{ url_for('report_data') }}",
+            data: function(d) {
+                return {
+                    employee_name: $('#employeeName').val(),
+                    pluri_id: $('#pluriId').val(),
+                    department: $('#department').val(),
+                    function: $('#function').val(),
+                    date_from: $('#dateFrom').val(),
+                    date_to: $('#dateTo').val()
+                };
+            }
+        },
+        columns: [
+            { data: 'pluri_id' },
+            { data: 'full_name' },
+            { data: 'department' },
+            { data: 'function' },
+            { data: 'total_hours' }
+        ],
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'excel', 'pdf'
+        ],  
+
+        language: {
+            emptyTable: "Aucune donnée disponible",
+            info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
+            infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
+            infoFiltered: "(filtré sur _MAX_ entrées au total)",
+                lengthMenu: "Afficher _MENU_ entrées",
+                loadingRecords: "Chargement...",
+                processing: "Traitement...",
+                search: "Rechercher:",
+                zeroRecords: "Aucun résultat trouvé",
+                paginate: {
+                  first: "Premier",
+                  last: "Dernier",
+                  next: "Suivant",
+                  previous: "Précédent",
+                },
+            },
+    });
+
+    // Handle form submission
+    $('#reportFilterForm').on('submit', function(e) {
+        e.preventDefault();
+        reportTable.ajax.reload();
+    });
+
+    // Set max date for date inputs to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateFrom').max = today;
+    document.getElementById('dateTo').max = today;
+
+    // Reset filters function
+    window.resetFilters = function() {
+        $('#reportFilterForm')[0].reset();
+        reportTable.ajax.reload();
+    };
+});
+</script>
+<script>
+    function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Add header information
+    doc.setFontSize(16);
+    doc.text('PluriMedic | Gestion d’entrepôt', 105, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text('Adresse : 19, Rue 7, Babiole, Port-au-Prince, Haïti', 105, 30, { align: 'center' });
+    doc.text('Email: info@hopitalplurimedic.com', 105, 35, { align: 'center' });
+    doc.text('Téléphone: +509 46 16 3878', 105, 40, { align: 'center' });
+
+    doc.setLineWidth(0.5);
+    doc.line(10, 45, 200, 45);
+
+    // Add table title
+    doc.setFontSize(14);
+    doc.text('Rapport de présences', 105, 55, { align: 'center' });
+
+    // Add date
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 105, 65, { align: 'center' });
+
+    // Fetch the table data and add it to the PDF
+    const tableData = [];
+    const tableHeader = ['Pluri ID', 'Nom Complet', 'Department', 'Fonction', 'Heures totales'];
+    
+    // Iterate over DataTable rows
+    $('#reportTable').DataTable().rows().every(function(rowIdx, tableLoop, rowLoop) {
+        const data = this.data();
+        tableData.push([
+            data.pluri_id,
+            data.full_name,
+            data.department,
+            data.function,
+            data.total_hours
+        ]);
+    });
+
+    // Add the table to the PDF
+    doc.autoTable({
+        head: [tableHeader],
+        body: tableData,
+        startY: 75,
+        theme: 'grid',
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [22, 160, 133] }
+    });
+
+    // Save the PDF
+    doc.save('Rapport_de_présences.pdf');
+}
+
+</script>
+<script>
+    // Define the departments and their associated roles
+    const departmentRoles = {
+        'Administration et Direction': [
+            'Comptable',
+            'Directeur(trice) médical(e)',
+            'Directeur(trice) de l\'hôpital',
+            'Gestionnaire des approvisionnements',
+            'Gestionnaire de la qualité',
+            'Gestionnaire des opérations',
+            'Responsable des finances',
+            'Responsable des relations publiques',
+            'Responsable des ressources humaines',
+            'Responsable informatique',
+            'Réceptionniste'
+        ],
+        'Personnel Médical': [
+            'Anesthésiste',
+            'Cardiologue',
+            'Chirurgien',
+            'Dentiste',
+            'Gynécologue',
+            'Médecin du travail',
+            'Médecin généraliste',
+            'Médecin interniste',
+            'Médecin urgentiste',
+            'Neurologue',
+            'Oncologue',
+            'Pédiatre'
+        ],
+        'Personnel Paramédical': [
+            'Assistant social',
+            'Diététicien(ne)',
+            'Ergothérapeute',
+            'Infirmier(ère) [soins généraux]',
+            'Infirmier(ère) anesthésiste',
+            'Infirmier(ère) bloc opératoire',
+            'Kinésithérapeute',
+            'Orthophoniste',
+            'Pharmacien hospitalier',
+            'Psychologue'
+        ],
+        'Personnel de Soutien Médical': [
+            'Aide-soignant(e)',
+            'Manipulateur radio',
+            'Prothésiste orthopédique',
+            'Technicien(ne) en imagerie médicale',
+            'Technicien(ne) en radiologie',
+            'Assistant(e) dentaire'
+        ],
+        'Services Techniques et Logistiques': [
+            'Agent de stérilisation',
+            'Agent d\'entretien',
+            'Électricien',
+            'Gardien(ne) de sécurité',
+            'Gestionnaire des déchets hospitaliers',
+            'Plombier',
+            'Responsable de la blanchisserie',
+            'Responsable de la sécurité',
+            'Technicien de maintenance'
+        ],
+        'Service de Restauration': [
+            'Aide-cuisinier(e)',
+            'Chef cuisinier',
+            'Cuisinier(ère)',
+            'Responsable nutritionnel',
+            'Serveur(euse)'
+        ],
+        'Recherche et Formation': [
+            'Chercheur médical',
+            'Coordonnateur de recherche clinique',
+            'Enseignant/Professeur en médecine',
+            'Stagiaire'
+        ]
+    };
+
+    // Function to populate department dropdown
+    function populateDepartments() {
+        const departmentSelect = document.getElementById('department');
+        departmentSelect.innerHTML = '<option value="">Tous les départements</option>';
+            
+        Object.keys(departmentRoles).forEach(department => {
+            const option = document.createElement('option');
+            option.value = department;
+            option.textContent = department;
+            departmentSelect.appendChild(option);
+        });
+    }
+
+    // Function to update roles based on selected department
+    function updateRoles() {
+        const departmentSelect = document.getElementById('department');
+        const roleSelect = document.getElementById('function');
+        const selectedDepartment = departmentSelect.value;
+        
+        // Clear and disable role select by default
+        roleSelect.innerHTML = '<option value="">Toutes les fonctions</option>';
+        roleSelect.disabled = true;
+        
+        if (selectedDepartment && departmentRoles[selectedDepartment]) {
+            // Enable role select and populate options
+            roleSelect.disabled = false;
+            departmentRoles[selectedDepartment].forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                roleSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Initialize the dropdowns when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        populateDepartments();
+        const departmentSelect = document.getElementById('department');
+        
+        // Add change event listener
+        departmentSelect.addEventListener('change', updateRoles);
+        
+        // If department is already selected, update roles
+        if (departmentSelect.value) {
+            updateRoles();
+        }
+    });
+</script>
+{% endblock %}

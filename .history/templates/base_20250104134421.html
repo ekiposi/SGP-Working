@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Système de Gestion de Présences</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Fonts and Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..1000&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    
+    <!-- Additional Dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.10.4/gsap.min.js"></script>
+</head>
+<style>
+    body {
+        font-family: "Raleway", serif;
+        font-optical-sizing: auto;
+    }
+    
+    .nav-link {
+        opacity: 0;
+        transform: translateY(20px);
+        visibility: hidden;  /* Hide elements before GSAP runs */
+    }
+    
+    /* Add these styles to fix dropdown behavior */
+    .group:hover .group-hover\:block {
+        display: block;
+    }
+    
+    /* Ensure dropdown stays above other content */
+    .absolute {
+        z-index: 50;
+    }
+    
+    /* Add smooth transition for mobile menu */
+    #mobile-menu {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    /* Improve mobile menu appearance */
+    @media (max-width: 1024px) {
+        #mobile-menu {
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        #mobile-menu .block {
+            padding: 0.75rem 1rem;
+        }
+        
+        #mobile-menu .border-t {
+            margin: 0.5rem 0;
+        }
+    }
+</style>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar shadow-sm bg-white border-b border-gray-100 py-4">
+        <div class="container px-4 mx-auto">
+            <div class="flex items-center justify-between">
+                <a href="{{ url_for('index') }}" class="navbar-brand text-xl font-semibold text-gray-800 hover:text-blue-600 transition duration-150">
+                    <i class="fas fa-clock text-blue-500 me-2"></i>Système de Gestion <br /> de Présence
+                </a>
+                
+                <!-- Mobile menu button -->
+                <button class="lg:hidden rounded-lg focus:outline-none focus:shadow-outline" id="menu-toggle" aria-controls="mobile-menu" aria-expanded="false">
+                    <svg fill="currentColor" viewBox="0 0 20 20" class="w-6 h-6">
+                        <path id="menu-icon" fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+
+                <!-- Desktop Navigation -->
+                <div class="navbar-links hidden lg:flex items-center space-x-4" id="menu">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                            <div class="flex items-center space-x-6">
+                                <a href="{{ url_for('dashboard') }}" class="nav-link px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150 flex items-center {% if request.endpoint == 'dashboard' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                    <i class="fas fa-chart-line me-2"></i> Tableau de bord
+                                </a>
+                                <a href="{{ url_for('employees') }}" class="nav-link px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150 flex items-center {% if request.endpoint == 'employees' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                    <i class="fas fa-users me-2"></i> Employés
+                                </a>
+                                <a href="{{ url_for('general') }}" class="nav-link px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150 flex items-center {% if request.endpoint == 'general' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                    <i class="fas fa-qrcode me-2"></i> Centre de Contrôle
+                                </a>
+                                <a href="{{ url_for('report') }}" class="nav-link px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150 flex items-center {% if request.endpoint == 'report' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                    <i class="fas fa-chart-bar me-2"></i> Rapports
+                                </a>
+                                <div class="border-l border-gray-200 h-6 mx-2"></div>
+                                <div class="relative group">
+                                    <button class="flex items-center px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150">
+                                        <i class="fas fa-cog me-2"></i> Plus <i class="fas fa-chevron-down ml-2"></i>
+                                    </button>
+                                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block">
+                                        <div class="py-1">
+                                            <a href="{{ url_for('scan') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 {% if request.endpoint == 'scan' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                                <i class="fas fa-camera me-2"></i> Scanner
+                                            </a>
+                                            <a href="{{ url_for('admin') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 {% if request.endpoint == 'admin' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                                <i class="fas fa-user-shield me-2"></i> Admin
+                                            </a>
+                                            <a href="{{ url_for('credits') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 {% if request.endpoint == 'credits' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                                <i class="fas fa-info-circle me-2"></i> Crédits
+                                            </a>
+                                            <a href="{{ url_for('backup') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 {% if request.endpoint == 'backup' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                                <i class="fas fa-database me-2"></i> Backup
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('profile') }}" class="nav-link px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150 flex items-center {% if request.endpoint == 'profile' %}bg-blue-50 text-blue-600 font-medium{% endif %}">
+                                <i class="fas fa-user me-2"></i> Mon Profil
+                            </a>
+                        {% endif %}
+                        <div class="border-l border-gray-200 h-6 mx-4"></div>
+                        <a href="{{ url_for('logout') }}" class="btn flex items-center px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-150">
+                            <i class="fas fa-sign-out-alt me-2"></i> Se déconnecter
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-150">
+                            <i class="fas fa-sign-in-alt me-2"></i> Se connecter
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Menu -->
+    <div class="lg:hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'dashboard' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-home me-2"></i> Tableau de bord
+                    </a>
+                    <a href="{{ url_for('employees') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'employees' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-users me-2"></i> Employés
+                    </a>
+                    <a href="{{ url_for('report') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'report' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-chart-bar me-2"></i> Rapports
+                    </a>
+                    <div class="border-t border-gray-200 my-2"></div>
+                    <a href="{{ url_for('scan') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'scan' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-camera me-2"></i> Scanner
+                    </a>
+                    <a href="{{ url_for('admin') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'admin' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-user-shield me-2"></i> Admin
+                    </a>
+                    <a href="{{ url_for('credits') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'credits' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-info-circle me-2"></i> Crédits
+                    </a>
+                    <a href="{{ url_for('backup') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'backup' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-database me-2"></i> Backup
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('profile') }}" class="block px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-150 {% if request.endpoint == 'profile' %}text-blue-600 font-medium{% endif %}">
+                        <i class="fas fa-user me-2"></i> Mon Profil
+                    </a>
+                {% endif %}
+                <div class="border-t border-gray-200 my-2"></div>
+                <a href="{{ url_for('logout') }}" class="block px-3 py-2 text-gray-600 hover:text-red-600 transition-colors duration-150">
+                    <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
+                </a>
+            {% else %}
+                <div class="px-3 py-2">
+                    <a href="{{ url_for('login') }}" class="inline-block w-full text-center btn btn-primary btn-sm bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-150 rounded-lg px-4 py-2">
+                        <i class="fas fa-sign-in-alt me-2"></i> Se connecter
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial state
+            gsap.set(".nav-link", {
+                visibility: "visible"  /* Make elements visible for GSAP */
+            });
+            
+            // Create timeline for better control
+            const tl = gsap.timeline({
+                defaults: {
+                    duration: 0.8,
+                    ease: "power2.out"
+                }
+            });
+            
+            // Add animations to timeline
+            tl.fromTo(".nav-link", 
+                {
+                    opacity: 0,
+                    y: 20,
+                    willChange: "transform, opacity"
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    stagger: 0.1,  /* Reduced stagger time */
+                    clearProps: "willChange"  /* Clean up after animation */
+                }
+            );
+        });
+
+        // Toggle mobile menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.querySelector('[aria-controls="mobile-menu"]');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            menuButton.addEventListener('click', function() {
+                const expanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !expanded);
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!menuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    menuButton.setAttribute('aria-expanded', 'false');
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {% if category == 'success' %}
+                            <i class="fas fa-check-circle me-2"></i>
+                        {% elif category == 'error' %}
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-5 py-3">
+        <div class="container text-center text-muted">
+            <small>&copy; 2024 Système de Gestion de Présence. Tous droits reservés.</small>
+        </div>
+    </footer>
+</body>
+</html>

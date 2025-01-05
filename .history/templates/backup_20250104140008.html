@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="backup-section">
+        <h2>Sauvegarde de la base de données</h2>
+        <div class="backup-actions">
+            <form method="POST" action="{{ url_for('create_backup') }}" class="backup-form">
+                <button type="submit" class="action-button backup">
+                    <i class="fas fa-download"></i>
+                    Créer une nouvelle sauvegarde
+                </button>
+            </form>
+        </div>
+
+        <div class="backup-list">
+            <h3>Sauvegardes existantes</h3>
+            {% if backups %}
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Taille</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                        <tr>
+                            <td>{{ backup.date.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                            <td>{{ backup.size }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('delete_backup', backup_id=backup.id) }}" style="display: inline;">
+                                    <button type="submit" class="action-button delete">
+                                        <i class="fas fa-trash"></i>
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucune sauvegarde disponible</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="settings-section mt-4">
+        <h2>Paramètres de sauvegarde</h2>
+        <form method="POST" action="{{ url_for('update_backup_settings') }}" class="settings-form">
+            <div class="form-group">
+                <label for="backup_frequency">Fréquence de sauvegarde automatique</label>
+                <select name="backup_frequency" id="backup_frequency" class="form-control">
+                    <option value="daily" {% if settings.frequency == 'daily' %}selected{% endif %}>Quotidienne</option>
+                    <option value="weekly" {% if settings.frequency == 'weekly' %}selected{% endif %}>Hebdomadaire</option>
+                    <option value="monthly" {% if settings.frequency == 'monthly' %}selected{% endif %}>Mensuelle</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="retention_period">Période de rétention (jours)</label>
+                <input type="number" name="retention_period" id="retention_period" class="form-control" 
+                       value="{{ settings.retention_period|default(30) }}" min="1" max="365">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                Enregistrer les paramètres
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .backup-section, .settings-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .backup-actions {
+        margin: 20px 0;
+    }
+
+    .action-button {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .action-button.backup {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .action-button.backup:hover {
+        background-color: #2563eb;
+    }
+
+    .action-button.delete {
+        background-color: #ef4444;
+        color: white;
+    }
+
+    .action-button.delete:hover {
+        background-color: #dc2626;
+    }
+
+    .backup-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .backup-table th,
+    .backup-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .backup-table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .settings-form {
+        max-width: 500px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+</style>
+{% endblock %}
