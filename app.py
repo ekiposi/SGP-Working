@@ -16,6 +16,7 @@ import sqlite3
 import schedule
 import time
 import shutil
+from sync_manager import SyncManager
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
@@ -23,6 +24,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder)
 BACKUP_DIR = os.path.join(app.root_path, 'instance', 'backups')
+
+# Initialize Sync Manager
+sync_manager = SyncManager(
+    local_db_path='instance/local_sync.db',
+    server_url='http://your-server-url/api'  # Replace with your actual server URL
+)
+
+# Start the sync worker thread
+sync_manager.start_sync_worker()
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -296,47 +306,87 @@ def delete_employee(employee_id):
 
     return redirect(url_for('employees'))
 
-def handle_attendance(employee):
-    now = get_eastern_time()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-    
-    # Check for existing attendance today
-    attendance = Attendance.query.filter(
-        Attendance.employee_id == employee.id,
-        Attendance.check_in >= today_start,
-        Attendance.check_in <= today_end
-    ).first()
-    
-    if attendance:
-        if not attendance.check_out:
-            # Check out
-            attendance.check_out = now
-            attendance.total_hours = (attendance.check_out - attendance.check_in).total_seconds() / 3600
+@app.route('/handle_attendance', methods=['POST'])
+def handle_attendance():
+    try:
+        data = request.get_json()
+        employee_id = data.get('employee_id')
+        
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return jsonify({'status': 'error', 'message': 'Employé non trouvé'}), 404
+            
+        current_time = get_eastern_time()
+        today = current_time.date()
+        
+        # Vérifie si l'employé a déjà pointé aujourd'hui
+        attendance = Attendance.query.filter_by(
+            employee_id=employee_id,
+            date=today
+        ).first()
+        
+        if not attendance:
+            # Pointage d'entrée
+            attendance = Attendance(
+                employee_id=employee_id,
+                date=today,
+                check_in=current_time
+            )
+            db.session.add(attendance)
             db.session.commit()
-            return {
+            
+            # Store change for sync
+            sync_manager.store_local_change(
+                'attendance',
+                attendance.id,
+                'create',
+                {
+                    'employee_id': employee_id,
+                    'date': today.isoformat(),
+                    'check_in': current_time.isoformat(),
+                    'check_out': None
+                }
+            )
+            
+            return jsonify({
                 'status': 'success',
-                'message': f'Départ enregistré avec succès à {now.strftime("%I:%M %p")}',
-                'type': 'check_out'
-            }
+                'message': 'Pointage d\'entrée enregistré',
+                'check_in': current_time.strftime('%H:%M:%S')
+            })
+            
+        elif not attendance.check_out:
+            # Pointage de sortie
+            attendance.check_out = current_time
+            db.session.commit()
+            
+            # Store change for sync
+            sync_manager.store_local_change(
+                'attendance',
+                attendance.id,
+                'update',
+                {
+                    'employee_id': employee_id,
+                    'date': today.isoformat(),
+                    'check_in': attendance.check_in.isoformat(),
+                    'check_out': current_time.isoformat()
+                }
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Pointage de sortie enregistré',
+                'check_out': current_time.strftime('%H:%M:%S')
+            })
+            
         else:
-            return {
+            return jsonify({
                 'status': 'error',
-                'message': 'Vous avez déjà enregistré votre départ aujourd\'hui.'
-            }
-    else:
-        # Check in
-        attendance = Attendance(
-            employee_id=employee.id,
-            check_in=now
-        )
-        db.session.add(attendance)
-        db.session.commit()
-        return {
-            'status': 'success',
-            'message': f'Arrivée enregistrée avec succès à {now.strftime("%I:%M %p")}',
-            'type': 'check_in'
-        }
+                'message': 'Employé déjà pointé entrée et sortie aujourd\'hui'
+            }), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/scan', methods=['GET', 'POST'])
 @login_required
@@ -358,10 +408,10 @@ def scan():
                 return jsonify({'status': 'error', 'message': 'Code QR invalide'}), 400
             
             if not config_data['face-recg']:
-                attendance_response = handle_attendance(employee)
+                attendance_response = handle_attendance({'employee_id': employee.id})
                 
                 return jsonify({
-                    **attendance_response,
+                    **attendance_response.json,
                     'faceEnabled': config_data['face-recg'],
                     'empId': employee.pluri_id
                 }), 200
@@ -416,10 +466,10 @@ def facial_recognition():
         employee = Employee.query.filter_by(pluri_id=emp_id).first()
         if not employee:
                 return jsonify({'status': 'error', 'message': 'Code QR invalide'}), 400
-        attendance_response = handle_attendance(employee)
+        attendance_response = handle_attendance({'employee_id': employee.id})
         
         return jsonify({
-            **attendance_response,
+            **attendance_response.json,
         })
     else:
         return jsonify({'status': 'error', 'message': 'Les visages ne correspondent pas. Veuillez vous assurer que le visage est clairement visible.'})
@@ -812,7 +862,7 @@ def update_backup_settings():
         flash('Paramètres de sauvegarde mis à jour', 'success')
     except Exception as e:
         flash(f'Erreur lors de la mise à jour des paramètres: {str(e)}', 'error')
-    
+
     return redirect(url_for('backup'))
 
 @app.route('/backup/delete/<backup_id>', methods=['POST'])
@@ -830,7 +880,7 @@ def delete_backup(backup_id):
             flash('Sauvegarde non trouvée', 'error')
     except Exception as e:
         flash(f'Erreur lors de la suppression: {str(e)}', 'error')
-    
+
     return redirect(url_for('backup'))
 
 def create_backup_file():
