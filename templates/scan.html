@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function startScanner() {
         html5QrcodeScanner.start(
-            { facingMode: "environment" }, // Use back camera if available
+            { facingMode: "user" }, // Use back camera if available
             {
                 fps: 10,
                 qrbox: { width: 250, height: 250 }
