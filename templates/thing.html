@@ -7,10 +7,10 @@
             <div class="card">
                 <div class="card-body">
                     <!-- QR Code Scanner Title -->
-                    <h2 id="qrTitle" class="card-title text-center mb-4" style="display: none;">QR Code Scanner</h2>
+                    <h2 id="qrTitle" class="card-title text-center mb-4" style="display: none;">Scan du code Qr</h2>
 
                     <!-- Facial Recognition Title -->
-                    <h2 id="facialTitle" class="card-title text-center mb-4" style="display: none;">Facial Recognition</h2>
+                    <h2 id="facialTitle" class="card-title text-center mb-4" style="display: none;">Reconnaissance faciale</h2>
 
                     <!-- Scanner container -->
                     <div id="reader" style="width: 100%; min-height: 400px;"></div>
@@ -225,7 +225,7 @@
 
         function startScanner() {
             html5QrcodeScanner.start(
-                { facingMode: "environment" },
+                { facingMode: "user" },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 onScanSuccess,
                 onScanError
