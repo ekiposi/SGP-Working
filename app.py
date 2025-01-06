@@ -41,7 +41,7 @@ def load_user(user_id):
 
 def get_eastern_time():
     # Always return UTC-5 regardless of server location
-    return datetime.utcnow() - timedelta(hours=5)
+    return datetime.utcnow()
 
 # Routes
 @app.route('/')
